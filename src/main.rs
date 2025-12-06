@@ -1,34 +1,27 @@
+use leptos::*;
+use leptos_axum::{LeptosRoutes, generate_route_list};
+use axum::{Router};
+use crate::app::App;
+
+mod app;
 mod ui;
 mod clients;
 
-use axum::Router;
-use leptos::*;
-use leptos_axum::{generate_route_list, LeptosRoutes};
-use ui::HomePage;
-use ui::LabsPage;
-
 #[tokio::main]
 async fn main() {
-    // Leptos の設定を Cargo.toml から読む
-    let conf = leptos_config::get_configuration(Some("Cargo.toml"))
-        .await
-        .expect("load leptos config");
+    let conf = get_configuration(None).unwrap();
+    let leptos_options = conf.leptos_options;
 
-    // 0.0.0.0:3000 固定
-    let mut leptos_options = conf.leptos_options;
-    let addr = "0.0.0.0:3000".parse().unwrap();
-    leptos_options.site_addr = addr;
+    let routes = generate_route_list(App);
 
-    // App コンポーネントからルート一覧を生成
-    let routes = generate_route_list(app::App);
-
-    // Axum に Leptos をマウント
     let app = Router::new()
-        .leptos_routes(&leptos_options, routes, app::App)
+        .leptos_routes(&leptos_options, routes, App)
+        .fallback(leptos_axum::file_and_error_handler)
         .with_state(leptos_options);
 
-    // axum 0.7 流儀で起動
-    let listener = tokio::net::TcpListener::bind(&addr).await.unwrap();
-    println!("listening on http://{addr}");
-    axum::serve(listener, app).await.unwrap();
+    println!("Starting server on port 3000...");
+    axum::Server::bind(&"0.0.0.0:3000".parse().unwrap())
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
 }

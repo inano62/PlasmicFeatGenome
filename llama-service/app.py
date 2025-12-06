@@ -12,5 +12,4 @@ class LlamaResponse(BaseModel):
 
 @app.post("/generate", response_model=LlamaResponse)
 async def generate(req: LlamaRequest):
-    # とりあえずダミー実装
-    return LlamaResponse(output=f"LLAMA says: {req.prompt}")
+    return LlamaResponse(output=f"[LLAMA ECHO] {req.prompt}")

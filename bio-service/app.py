@@ -1,35 +1,38 @@
-import os
-import requests
+# bio-service/app.py
 from fastapi import FastAPI
 from pydantic import BaseModel
-from Bio.SeqUtils import gc_fraction  # 例として GC 含量を使う
+from Bio.SeqUtils import gc_fraction
+import os
+import requests
 
 app = FastAPI()
 
-LLAMA_URL = os.getenv("LLAMA_URL", "http://llama-service:8000")
-
-class GenomeRequest(BaseModel):
+class AnalyzeRequest(BaseModel):
     seq: str
 
-class GenomeResponse(BaseModel):
+class AnalyzeResponse(BaseModel):
     gc_content: float
     llama_comment: str
 
-@app.post("/analyze", response_model=GenomeResponse)
-def analyze(req: GenomeRequest):
-    # 1) まず Llama に投げる
-    llama_resp = requests.post(
-        f"{LLAMA_URL}/llama",
-        json={"seq": req.seq},
-        timeout=60,
-    )
-    llama_resp.raise_for_status()
-    llama_comment = llama_resp.json()["comment"]
+@app.post("/analyze", response_model=AnalyzeResponse)
+def analyze(req: AnalyzeRequest):
+    # 1) GC 含量を計算
+    gc = float(gc_fraction(req.seq))
 
-    # 2) BioPython で解析（ここはお好みで拡張）
-    gc = gc_fraction(req.seq)  # 0.0〜1.0 の GC 含量
+    # 2) Llama サービス URL（デフォルト値つき）
+    llama_url = os.getenv("LLAMA_URL", "http://llama-service:8000")
 
-    return GenomeResponse(
-        gc_content=gc,
-        llama_comment=llama_comment,
-    )
+    try:
+        resp = requests.post(
+            f"{llama_url}/generate",   # ★ /llama → /generate に
+            json={"prompt": req.seq},
+            timeout=5,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        comment = data.get("output", str(data))
+    except Exception as e:
+        # 例外は握りつぶして文字列にして返す（ここで 500 にはしない）
+        comment = f"llama error: {e}"
+
+    return AnalyzeResponse(gc_content=gc, llama_comment=comment)
