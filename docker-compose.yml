@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: plasmic-postgres
+    environment:
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_password
+      POSTGRES_DB: app_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    container_name: plasmic-axum-leptos
+    environment:
+      RUST_LOG: debug
+      DATABASE_URL: postgres://app_user:app_password@db:5432/app_db
+      BIO_SERVICE_URL: http://bio-service:8000  # ★ Axum から叩く先
+    depends_on:
+      - db
+      - bio-service
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/src/app
+      - cargo-target:/usr/src/app/target
+
+  llama-service:
+    build: ./llama-service
+    container_name: plasmic-llama
+    # 外に出さなくていいなら ports は不要（内部からだけ叩く）
+    # ports:
+    #   - "8001:8000"
+
+  bio-service:
+    build: ./bio-service
+    container_name: plasmic-bio
+    environment:
+      LLAMA_URL: http://llama-service:8000  # ★ BioPython → Llama の経路
+    depends_on:
+      - llama-service
+    # 必要なら外部にも公開
+    # ports:
+    #   - "8002:8000"
+
+volumes:
+  postgres-data:
+  cargo-target:
+
