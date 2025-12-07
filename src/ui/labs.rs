@@ -1,52 +1,39 @@
 use leptos::*;
-use leptos_router::*;
-use crate::clients::call_llama;
-use leptos::ServerFnError;
+use crate::server::llama::LlamaAsk;
 
 #[component]
-pub fn Labs() -> impl IntoView {
-    let input = create_rw_signal("ACGT".to_string());
-    let action = create_server_action::<AnalyzeWithAi>();
+pub fn LabsPage() -> impl IntoView {
+    let (input, set_input) = create_signal(String::new());
+
+    // ★ server_fn を呼ぶ action
+    let ask_action = create_server_action::<LlamaAsk>();
 
     view! {
-        <div>
-            <h1>"Genome AI Labs"</h1>
+        <h1>Llama Labs</h1>
 
-            <input
-                value=input.get()
-                on:input=move |ev| input.set(event_target_value(&ev))
-            />
+        <textarea
+            prop:value=input
+            on:input=move |ev| set_input(event_target_value(&ev))
+        />
 
-            <button on:click=move |_| {
-                action.dispatch(AnalyzeWithAi {
+        <button
+            on:click=move |_| {
+                ask_action.dispatch(LlamaAsk {
                     prompt: input.get()
                 });
-            }>
-                "Analyze"
-            </button>
+            }
+        >
+            "送信"
+        </button>
 
-            <p>
-                {move || {
-                    action
-                        .value()
-                        .get()
-                        .as_ref()
-                        .map(|res| match res {
-                            Ok(msg) => msg.clone(),
-                            Err(e) => format!("error: {e}"),
-                        })
-                        .unwrap_or_else(|| "no result yet".to_string())
-                }}
-            </p>
+        <div>
+            {
+                move || match ask_action.value().get() {
+                    Some(Ok(res)) => view! { <p>{res}</p> }.into_view(),
+                    Some(Err(e))  => view! { <p>Error: {e.to_string()}</p> }.into_view(),
+                    None => view! { <p>まだ送信していません</p> }.into_view(),
+                }
+            }
         </div>
     }
-}
-
-#[server]
-pub async fn analyze_with_ai(prompt: String) -> Result<String, ServerFnError> {
-    let output = call_llama(prompt)
-        .await
-        .map_err(|e| ServerFnError::ServerError(e.to_string()))?;
-
-    Ok(format!("LLAMA: {}", output))
 }

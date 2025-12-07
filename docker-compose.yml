@@ -12,18 +12,19 @@ services:
   app:
     build: .
     container_name: plasmic-axum-leptos
-    environment:
-      RUST_LOG: debug
-      DATABASE_URL: postgres://app_user:app_password@db:5432/app_db
-      BIO_SERVICE_URL: http://bio-service:8000
-    depends_on:
-      - db
-      - bio-service
+#    environment:
+#      RUST_LOG: debug
+#      DATABASE_URL: postgres://app_user:app_password@db:5432/app_db
+#      BIO_SERVICE_URL: http://bio-service:8000
+#    depends_on:
+#      - plasmic-postgres
+#      - plasmic-llama
+#      - plasmic-bio
     ports:
       - "3000:3000"
-    volumes:
-      - .:/usr/src/app
-      - cargo-target:/usr/src/app/target
+#    volumes:
+#      - .:/usr/src/app
+#      - cargo-target:/usr/src/app/target
 
   llama-service:
     build: ./llama-service

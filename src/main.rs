@@ -1,3 +1,4 @@
+mod server;
 use axum::Router;
 use leptos::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
