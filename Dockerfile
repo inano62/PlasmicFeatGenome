@@ -1,13 +1,12 @@
 # ========= build stage =========
-FROM rust:1.84 AS builder
+FROM rust:1.89 AS builder
 
 WORKDIR /usr/src/app
 
-# cargo-leptos をインストール（0.3.0に固定）
+# cargo-leptos を先に入れてキャッシュさせる
 RUN cargo install cargo-leptos --version 0.3.0 --locked
 
 # 依存解決キャッシュ
-# Cargo.lock が無い場合は、この行を「COPY Cargo.toml ./」だけにする
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir src \
  && echo "fn main() {}" > src/main.rs \
@@ -25,8 +24,13 @@ FROM debian:stable-slim AS runtime
 
 WORKDIR /usr/src/app
 
+# 必要なCA証明書（reqwest/https用）
+RUN apt-get update \
+ && apt-get install -y ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
 # ビルド成果物だけコピー
-COPY --from=builder /usr/src/app/target/release/plasmic_feat_genome /usr/local/bin/plasmic_feat_genome
+COPY --from=builder /usr/src/app/target/release/* /usr/local/bin/
 COPY --from=builder /usr/src/app/target/site /usr/src/app/target/site
 
 EXPOSE 3000
