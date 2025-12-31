@@ -4,31 +4,38 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-#axum = { version = "0.7", features = ["macros", "http1", "tokio"] }
-axum = "0.7"
-#tokio = { version = "1.40", features = ["macros", "rt-multi-thread"] }
-tokio = { version = "1", features = ["full"] }
-leptos = { version = "0.6.15", features = ["ssr"] }
-#leptos = { version = "0.6", features = ["csr", "hydrate", "ssr"] }
+leptos = { version = "0.6.15", default-features = false }
+leptos_router = { version = "0.6.15", default-features = false }
 
-#leptos_axum = "0.6"
-#leptos_axum = { version = "0.6.15", features = ["ssr"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# ★ WASM に入れたくない deps は、ここには置かない
+# sqlx / reqwest / axum / tokio / leptos_axum / home / dirs は下へ
+
+[features]
+# cargo-leptos が「SSR + Hydrate」を両方作るので、両方用意
+default = ["ssr"]
+ssr = [
+    "leptos/ssr",
+    "leptos_router/ssr"
+]
+hydrate = [
+    "leptos/hydrate",
+    "leptos_router/hydrate"
+]
+
+# ===== サーバー専用依存（WASMに絶対入らない）=====
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
 leptos_axum = "0.6.15"
-#leptos_router = { version = "0.6", features = ["ssr"] }
-#leptos_router = "0.6.15"
-leptos_router = { version = "0.6.15", features = ["ssr"] }
 
 sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "postgres", "macros"] }
-anyhow = "1"
+reqwest = { version = "0.11", features = ["json", "gzip"] }
 
-#reqwest = { version = "0.12", features = ["json", "rustls-tls"] }
-reqwest = { version = "0.11", features = ["json", "blocking", "multipart", "cookies", "gzip"] }
-#serde = { version = "1.0", features = ["derive"] }
-serde = { version = "1", features = ["derive"] }
-base64ct = { version = "=1.7.3", default-features = false }
-home = "=0.5.11"
-
-serde_json = "1"
+home = "0.5.11"
+dirs = "5"
 
 [package.metadata.leptos]
 output-name = "plasmic_feat_genome"
@@ -36,4 +43,13 @@ site-root   = "target/site"
 site-addr   = "0.0.0.0:3000"
 reload-port = 3001
 env         = "DEV"
-bin-target  = "plasmic_feat_genome"
+
+# ★ これが超重要：cargo-leptos に「どのfeatureでビルドするか」を明示
+bin-features = ["ssr"]
+lib-features = ["hydrate"]
+
+# bin-target は main.rs のバイナリ名
+bin-target = "plasmic_feat_genome"
+
+[lib]
+crate-type = ["cdylib", "rlib"]

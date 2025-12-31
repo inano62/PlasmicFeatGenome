@@ -8,29 +8,45 @@ services:
       POSTGRES_DB: app_db
     ports:
       - "5432:5432"
-
-  app:
-    build: .
-    container_name: plasmic-axum-leptos
-    environment:
-      LLAMA_URL: http://llama-service:8000
-    depends_on:
-      - llama-service
-    ports:
-      - "3000:3000"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app_user -d app_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   llama-service:
     build: ./llama-service
     container_name: plasmic-llama
+    ports:
+      - "8000:8000"
 
   bio-service:
     build: ./bio-service
     container_name: plasmic-bio
     environment:
-      LLAMA_URL: http://llama-service:8000
+      LLAMA_URL: "http://llama-service:8000"
+    ports:
+      - "8001:8000"
     depends_on:
       - llama-service
 
+  app:
+    build: .
+    container_name: plasmic-axum-leptos
+    environment:
+      LLAMA_URL: "http://llama-service:8000"
+      DATABASE_URL: "postgres://app_user:app_password@db:5432/app_db"
+      LEPTOS_SITE_ADDR: "0.0.0.0:3000"
+      RUST_LOG: "info"
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+      llama-service:
+        condition: service_started
+
 volumes:
   postgres-data:
-  cargo-target:
