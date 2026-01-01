@@ -17,10 +17,20 @@ services:
       retries: 20
 
   llama-service:
+    volumes:
+      - ./models:/models:ro
     build: ./llama-service
     container_name: plasmic-llama
     ports:
       - "8000:8000"
+    environment:
+      MODEL_PATH: /models/qwen2.5-3b-instruct.Q4_K_M.gguf
+    healthcheck:
+      test: [ "CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz').read()\"" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
 
   bio-service:
     build: ./bio-service
@@ -30,7 +40,8 @@ services:
     ports:
       - "8001:8000"
     depends_on:
-      - llama-service
+       llama-service:
+          condition: service_healthy
 
   app:
     build: .
@@ -46,7 +57,7 @@ services:
       db:
         condition: service_healthy
       llama-service:
-        condition: service_started
+        condition: service_healthy
 
 volumes:
   postgres-data:

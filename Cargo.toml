@@ -53,3 +53,4 @@ bin-target = "plasmic_feat_genome"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+sqlx = { version = "0.7", features = ["postgres", "runtime-tokio-rustls"] }
