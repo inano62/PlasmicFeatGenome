@@ -24,6 +24,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+#      MODEL_PATH: /models/qwen2.5-3b-instruct.Q4_K_M.gguf
       MODEL_PATH: /models/qwen2.5-3b-instruct.Q4_K_M.gguf
     healthcheck:
       test: [ "CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz').read()\"" ]
@@ -42,12 +43,16 @@ services:
     depends_on:
        llama-service:
           condition: service_healthy
+    volumes:
+      - ./bio-service/scripts:/app/scripts:ro
+      - ./data:/data:ro
 
   app:
     build: .
     container_name: plasmic-axum-leptos
     environment:
       LLAMA_URL: "http://llama-service:8000"
+      BIO_URL: "http://bio-service:8000"
       DATABASE_URL: "postgres://app_user:app_password@db:5432/app_db"
       LEPTOS_SITE_ADDR: "0.0.0.0:3000"
       RUST_LOG: "info"
