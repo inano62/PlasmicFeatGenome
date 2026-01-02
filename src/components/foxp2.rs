@@ -1,12 +1,6 @@
 use leptos::*;
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize)]
-struct AnalyzeReq {
-    fasta: String,
-    prompt: Option<String>,
-    max_tokens: Option<i32>,
-}
+use serde::Deserialize;
+use crate::shared::bio_types::AnalyzeReq;
 
 #[derive(Deserialize, Clone)]
 struct AnalyzeRes {
@@ -21,7 +15,7 @@ struct AnalyzeRes {
 pub fn Foxp2Demo() -> impl IntoView {
     let (fasta, set_fasta) = create_signal(String::new());
     let (result, set_result) = create_signal::<Option<AnalyzeRes>>(None);
-    let (err, set_err) = create_signal::<Option<String>>(None);
+    let (_err, set_err) = create_signal::<Option<String>>(None);
 
     let on_click = move |_| {
         let fasta_val = fasta.get();

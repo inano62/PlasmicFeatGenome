@@ -11,7 +11,7 @@ pub fn App() -> impl IntoView {
                 <h1>"PLASMIC feat. Genome [BUILD-TEST-0102]"</h1>
                 <Routes>
                     <Route path="/" view=Home />
-                    <Route path="/foxp2" view=Foxp2Page />
+                    <Route path="/foxp2" view=FoxP2 />
                 </Routes>
             </main>
         </Router>
@@ -28,7 +28,7 @@ fn Home() -> impl IntoView {
 }
 
 #[component]
-fn Foxp2Page() -> impl IntoView {
+fn FoxP2() -> impl IntoView {
     view! {
         <main>
             <Foxp2Demo/>

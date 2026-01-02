@@ -9,9 +9,5 @@ pub struct AnalyzeReq {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalyzeRes {
-    pub record_id: String,
-    pub length_nt: i32,
-    pub gc_percent: f64,
-    pub facts: String,
-    pub summary: Option<String>,
+    pub result: String,
 }
