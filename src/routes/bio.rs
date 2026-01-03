@@ -1,3 +1,5 @@
+#![cfg(feature = "ssr")]
+
 use axum::{
     Extension,
     Json,

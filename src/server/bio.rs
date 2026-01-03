@@ -1,3 +1,5 @@
+#![cfg(feature = "ssr")]
+
 use axum::{Router, routing::post};
 use crate::routes;
 
